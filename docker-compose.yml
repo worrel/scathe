@@ -1,0 +1,54 @@
+version: '3'
+
+volumes:
+  pg_data_2:
+    driver: local
+
+services:
+
+  frontend:
+    build: .
+    image: scathe:rory
+    command: ["java", "-cp", "scathe-all.jar", "com.worrel.scathe.FrontendNode" ]
+    networks:
+      - sandbox
+    ports:
+      - "8080:8080"
+    depends_on:
+      - rabbit
+    environment:
+      - RABBIT_HOST
+  
+  backend:
+    image: scathe:rory
+    command: ["java", "-cp", "scathe-all.jar", "com.worrel.scathe.BackendNode" ]
+    networks:
+      - sandbox
+    depends_on:
+      - rabbit
+    environment:
+      - RABBIT_HOST
+
+  rabbit:
+    image: rabbitmq:management
+    networks:
+      - sandbox
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+
+  postgres:
+      image: postgres:10
+      volumes:
+        - pg_data_2:/var/lib/postgresql/data
+      networks:
+        - sandbox
+      ports:
+        - "5432:5432"
+      environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=postgres
+
+networks:
+  sandbox:
+    driver: bridge
